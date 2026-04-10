@@ -4,7 +4,7 @@ const path = require("path");
 
 module.exports = {
     command: ["menu", "help", "mainmenu"],
-    execute: async (sock, m, args, { reply }) => {
+    execute: async (sock, m, { args, reply }) => { // <--- FIXED: Destructuring corrected
         try {
             const pluginFolder = path.join(__dirname, "../plugins");
             if (!fs.existsSync(pluginFolder)) return reply("❌ Plugins folder not found!");
@@ -17,14 +17,11 @@ module.exports = {
             const minutes = Math.floor((runtime % 3600) / 60);
             const seconds = Math.floor(runtime % 60);
 
-            // Group Link na ID yako
             const inviteLink = "https://chat.whatsapp.com/HsWMMyTxvi35AooYo4Qz1U";
-            const groupJid = "120363425077689217@g.us";
 
             let menuHeader = `*╭┄┄✪ DARKX-MINI ✪┄┄⊷*\n`;
             menuHeader += `*┃❂┬┄✯✯✯✯✯✯✯✯*\n`;
             menuHeader += `*┃❂┊ Owner:* ${config.ownerName}\n`;
-            menuHeader += `*┃❂┊ Baileys:* Mᴜʟᴛɪ Dᴇᴠɪᴄᴇ\n`;
             menuHeader += `*┃❂┊ Date:* ${new Date().toLocaleDateString()}\n`;
             menuHeader += `*┃❂┊ Runtime:* ${hours}h ${minutes}m ${seconds}s\n`;
             menuHeader += `*┃❂┊ Prefix:* ${config.prefix}\n`;
@@ -33,26 +30,37 @@ module.exports = {
             menuHeader += `*┃❂┴┄✯✯✯✯✯✯✯✯*\n`;
             menuHeader += `*╰┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈⊷*\n\n`;
 
-            let commandsList = `*╭┈┈┄❂ ALL COMMANDS ❂┄┄┄◈*\n`;
+            // Kutenganisha Commands kwa Category
+            let categories = {};
             
-            // Safe loop kusoma commands
             for (const file of pluginFiles) {
                 try {
                     const plugin = require(path.join(pluginFolder, file));
                     if (plugin.command) {
                         const cmdName = Array.isArray(plugin.command) ? plugin.command[0] : plugin.command;
-                        commandsList += `*┋⬡ ${config.prefix}${cmdName}*\n`;
+                        const cat = plugin.category ? plugin.category.toUpperCase() : "OTHER";
+                        
+                        if (!categories[cat]) categories[cat] = [];
+                        categories[cat].push(cmdName);
                     }
                 } catch (err) {
-                    // Skip errors katika plugin moja ili bot isife
                     continue;
                 }
             }
+
+            let commandsList = "";
+            for (const cat in categories) {
+                commandsList += `*╭┈┈┄❂ ${cat} ❂┄┄┄◈*\n`;
+                for (const cmd of categories[cat]) {
+                    commandsList += `*┋⬡ ${config.prefix}${cmd}*\n`;
+                }
+                commandsList += `*╰┄┄┄┄┄┈┈┈┈┄┄┄◈*\n\n`;
+            }
             
-            commandsList += `*╰┄┄┄┄┄┈┈┈┈┄┄┄◈*\n\n`;
             commandsList += `> _"Mwana wa Mzee King Project"_`;
 
-            const hackerImage = "https://wallpapercave.com/wp/wp4503323.jpg";
+            // Picha ya Hacker (Cyberpunk Style)
+            const hackerImage = "https://files.catbox.moe/pc5uec.png"; 
 
             await sock.sendMessage(m.chat, { 
                 image: { url: hackerImage }, 
@@ -61,12 +69,12 @@ module.exports = {
                     forwardingScore: 999,
                     isForwarded: true,
                     externalAdReply: {
-                        title: "JOIN AI TIPS.. HQ",
-                        body: "Build music videos for free with us!",
+                        title: "DARKX-MINI SYSTEM",
+                        body: "Mwana wa Mzee King Project",
                         mediaType: 1,
                         thumbnailUrl: hackerImage,
                         sourceUrl: inviteLink,
-                        renderLargerThumbnail: false,
+                        renderLargerThumbnail: true, // Nimeiweka TRUE ili picha iwe kubwa na ivutie
                         showAdAttribution: true
                     }
                 }
@@ -74,7 +82,8 @@ module.exports = {
 
         } catch (globalErr) {
             console.error("Menu Crash Protection:", globalErr);
-            reply("❌ Error opening menu. Check console.");
+            // Ikishindikana kabisa, tumia reply ya kawaida
+            sock.sendMessage(m.chat, { text: "❌ Error opening menu. Check console." }, { quoted: m });
         }
     }
 };
