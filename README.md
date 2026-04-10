@@ -1,7 +1,7 @@
 # 🎭 DARKX-MINI WHATSAPP BOT
 
 <p align="center">
-  <img src="https://telegra.ph/file/dcce2ddee66e746536093.jpg" width="200" height="200" alt="DarkX Logo">
+  <img src="https://files.catbox.moe/pc5uec.png" width="200" height="200" alt="DarkX Logo">
 </p>
 
 <p align="center">
