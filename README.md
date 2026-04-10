@@ -1,106 +1,53 @@
-# 乂 D A R K X - M I N I 乂  
-> ⚡ Next-Level WhatsApp Multi-Device Bot Engine  
-> Built with precision by **MrX Dev**
+# 🎭 DARKX-MINI WHATSAPP BOT
+
+<p align="center">
+  <img src="https://telegra.ph/file/dcce2ddee66e746536093.jpg" width="200" height="200" alt="DarkX Logo">
+</p>
+
+<p align="center">
+  <a href="https://github.com/darkx-pro/DarkX-Mini/fork"><img src="https://img.shields.io/badge/FORK-REPO-blue?style=for-the-badge&logo=github" alt="Fork"></a>
+  <a href="https://github.com/darkx-pro/DarkX-Mini/stargazers"><img src="https://img.shields.io/badge/STAR-REPO-yellow?style=for-the-badge&logo=github" alt="Stars"></a>
+</p>
 
 ---
 
-![DarkX Banner](https://wallpapercave.com/wp/wp4503323.jpg)
+## 🚀 NJIA ZA KU-DEPLOY
+
+### 1. HEROKU (Njia Rahisi)
+Bonyeza button hapa chini kuanza ku-deploy moja kwa moja kwenye Heroku.
+
+[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://dashboard.heroku.com/new?template=https://github.com/darkx-pro/DarkX-Mini)
 
 ---
 
-## 🧠 OVERVIEW
-**DarkX-minBot** is not just another WhatsApp bot — it's a modular automation engine designed for speed, flexibility, and power.
+## 🔑 JINSI YA KUPATA SESSION ID
+Kabla ya ku-deploy, unahitaji **Session ID**. Fuata hatua hizi:
 
-Built on **Node.js** with **Baileys MD Protocol**, it allows seamless integration of custom plugins without touching the core system.
+1.  Fungua tovuti hii: [**SMD Pairing Site**](https://smd-pair.zone.id/pair)
+2.  Ingiza namba yako ya WhatsApp (mfano: `255775710774`).
+3.  Ingiza **Pairing Code** utakayopokea kwenye WhatsApp yako.
+4.  Baada ya kufanikiwa, utatumiwa kodi ndefu inayoanza na `SMD~`.
 
-> ⚠️ Lightweight. Extendable. Dangerous (in a good way).
-
----
-
-## ⚙️ CORE FEATURES
-
-✔️ Pairing Code Login  
-> No QR stress. Clean authentication flow.
-
-✔️ Dynamic Plugin System  
-> Drop `.js` files → instantly adds commands.
-
-✔️ Media Downloader Engine  
-> High-speed YouTube video & audio extraction.
-
-✔️ ViewOnce Override  
-> Access restricted media automatically.
-
-✔️ AI Integration  
-> Smart responses powered by modern AI APIs.
-
-✔️ Sticker Engine  
-> Convert images/videos into custom stickers with metadata.
+### ⚠️ MUHIMU: Badilisha Jina la Session
+Bot yetu inatambua kodi inayozanza na jina la **DarkX-Ultra**. Fanya hivi:
+* **Kodi uliyopata:** `SMD~eyJub2lzZ...`
+* **Badilisha iwe:** `DarkX-Ultra~eyJub2lzZ...`
+*(Futa tu neno `SMD` na weka `DarkX-Ultra` kabla ya alama ya `~`)*.
 
 ---
 
-## 📁 PROJECT ARCHITECTURE
+### 2. DEPLOY KWENYE PANEL (Pterodactyl/VPS)
+Kama unatumia Panel au VPS, tumia amri hizi kwenye Console:
 
 ```bash
-DarkX-minBot/
-├── index.js
-├── message.js
-├── library/
-├── plugins/
-├── settings/
-└── session/
-```
+# 1. Clone Repo
+git clone [https://github.com/darkx-pro/DarkX-Mini.git](https://github.com/darkx-pro/DarkX-Mini.git)
 
----
+# 2. Ingia kwenye folder
+cd DarkX-Mini
 
-## 🚀 INSTALLATION
-
-```bash
+# 3. Install Module muhimu
 npm install
-```
 
----
-
-## ⚙️ CONFIG
-
-```javascript
-module.exports = {
-    botName: "DarkX-minBot",
-    ownerName: "MrX Dev",
-    ownerNumber: "255XXXXXXXXX",
-    prefix: "."
-};
-```
-
----
-
-## ▶️ RUN
-
-```bash
-node index.js
-```
-
----
-
-## 🎯 COMMANDS
-
-| Command | Action |
-|--------|--------|
-| .menu | Show plugins |
-| .video | Download video |
-| .song | Download audio |
-| .ai | Chat AI |
-| .vv | View once |
-| .s | Sticker |
-
----
-
-## 👨‍💻 DEV
-
-MrX Developer
-
----
-
-## 📜 LICENSE
-
-MIT License
+# 4. Washa Bot
+npm start
