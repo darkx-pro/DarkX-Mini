@@ -5,26 +5,53 @@ const path = require("path");
 module.exports = async (sock, m, chatUpdate) => {
     try {
         const { type, fromMe, chat, sender, body } = m;
+        
+        // Kuzuia bot isijibu kama hakuna maandishi
+        if (!body) return;
+        
         const isCmd = body.startsWith(config.prefix);
         const command = isCmd ? body.slice(config.prefix.length).trim().split(/ +/).shift().toLowerCase() : "";
         const args = body.trim().split(/ +/).slice(1);
+        const text = args.join(" ");
+        const q = text; // Mbadala wa text kwa baadhi ya plugins
 
-        // Basic Command Example
-        if (command === "ping") {
-            await sock.sendMessage(chat, { text: "DarkX-minBot Speed: 0.22ms" });
-        }
+        // Kutengeneza 'reply' function ili kuzuia error kwenye plugins
+        const reply = (teks) => {
+            return sock.sendMessage(m.chat, { text: teks }, { quoted: m });
+        };
 
-        // Plugin Loader Logic
-        const pluginFolder = path.join(__dirname, "plugins");
-        const pluginFiles = fs.readdirSync(pluginFolder).filter(file => file.endsWith(".js"));
+        if (isCmd) {
+            const pluginFolder = path.join(__dirname, "plugins");
+            
+            // Hakikisha folder la plugins lipo
+            if (!fs.existsSync(pluginFolder)) {
+                fs.mkdirSync(pluginFolder);
+            }
 
-        for (const file of pluginFiles) {
-            const plugin = require(path.join(pluginFolder, file));
-            if (plugin.command && plugin.command.includes(command)) {
-                await plugin.execute(sock, m, args);
+            const pluginFiles = fs.readdirSync(pluginFolder).filter(file => file.endsWith(".js"));
+
+            for (const file of pluginFiles) {
+                try {
+                    const plugin = require(path.join(pluginFolder, file));
+                    
+                    // Kuangalia kama amri iliyoandikwa inafanana na plugin iliyopo
+                    if (plugin.command && (Array.isArray(plugin.command) ? plugin.command.includes(command) : plugin.command === command)) {
+                        
+                        // Tunapitisha data zote muhimu kwenda kwenye plugin
+                        await plugin.execute(sock, m, args, { 
+                            text, 
+                            q, 
+                            reply, 
+                            config, 
+                            chatUpdate 
+                        });
+                    }
+                } catch (err) {
+                    console.error(`Error kwenye plugin ${file}:`, err);
+                }
             }
         }
     } catch (err) {
-        console.error("Error in message.js:", err);
+        console.error("Error kubwa ndani ya message.js:", err);
     }
 };
