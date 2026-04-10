@@ -6,44 +6,62 @@ module.exports = async (sock, m, chatUpdate) => {
     try {
         const { type, fromMe, chat, sender, body } = m;
         
-        // Kuzuia bot isijibu kama hakuna maandishi
         if (!body) return;
         
         const isCmd = body.startsWith(config.prefix);
         const command = isCmd ? body.slice(config.prefix.length).trim().split(/ +/).shift().toLowerCase() : "";
         const args = body.trim().split(/ +/).slice(1);
         const text = args.join(" ");
-        const q = text; // Mbadala wa text kwa baadhi ya plugins
+        const q = text;
 
-        // Kutengeneza 'reply' function ili kuzuia error kwenye plugins
+        // --- 1. DHANA ZA GROUP (KUZUIA ERROR KWENYE PLUGINS) ---
+        const isGroup = m.chat.endsWith('@g.us');
+        const groupMetadata = isGroup ? await sock.groupMetadata(m.chat).catch(e => {}) : '';
+        const groupName = isGroup ? groupMetadata.subject : '';
+        const participants = isGroup ? await groupMetadata.participants : '';
+        const groupAdmins = isGroup ? participants.filter(v => v.admin !== null).map(v => v.id) : [];
+        
+        const isAdmin = isGroup ? groupAdmins.includes(m.sender) : false;
+        const isBotAdmin = isGroup ? groupAdmins.includes(sock.user.id.split(':')[0] + '@s.whatsapp.net') : false;
+        const isOwner = [config.ownerNumber + '@s.whatsapp.net', sock.user.id].includes(m.sender);
+
         const reply = (teks) => {
             return sock.sendMessage(m.chat, { text: teks }, { quoted: m });
         };
 
         if (isCmd) {
             const pluginFolder = path.join(__dirname, "plugins");
-            
-            // Hakikisha folder la plugins lipo
-            if (!fs.existsSync(pluginFolder)) {
-                fs.mkdirSync(pluginFolder);
-            }
+            if (!fs.existsSync(pluginFolder)) fs.mkdirSync(pluginFolder);
 
             const pluginFiles = fs.readdirSync(pluginFolder).filter(file => file.endsWith(".js"));
 
             for (const file of pluginFiles) {
                 try {
+                    // Muhimu: Tunatumia cache-clearing ili ukibadili kodi ya plugin isihitaji kurestart bot
+                    delete require.cache[require.resolve(path.join(pluginFolder, file))];
                     const plugin = require(path.join(pluginFolder, file));
                     
-                    // Kuangalia kama amri iliyoandikwa inafanana na plugin iliyopo
                     if (plugin.command && (Array.isArray(plugin.command) ? plugin.command.includes(command) : plugin.command === command)) {
                         
-                        // Tunapitisha data zote muhimu kwenda kwenye plugin
-                        await plugin.execute(sock, m, args, { 
+                        // --- 2. ULINZI WA PLUGINS (PRE-EXECUTION CHECKS) ---
+                        if (plugin.isGroup && !isGroup) return reply("Amri hii ni kwa ajili ya magroup pekee!");
+                        if (plugin.isAdmin && !isAdmin) return reply("Wewe siyo admin!");
+                        if (plugin.isBotAdmin && !isBotAdmin) return reply("Nifanye niwe admin kwanza!");
+                        if (plugin.isOwner && !isOwner) return reply("Hii ni kwa ajili ya mmiliki wangu pekee!");
+
+                        await plugin.execute(sock, m, { 
+                            args, 
                             text, 
                             q, 
                             reply, 
                             config, 
-                            chatUpdate 
+                            chatUpdate,
+                            isGroup,
+                            isAdmin,
+                            isBotAdmin,
+                            isOwner,
+                            participants,
+                            groupMetadata
                         });
                     }
                 } catch (err) {
