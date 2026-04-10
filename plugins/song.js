@@ -1,33 +1,32 @@
 const axios = require('axios');
 const yts = require('yt-search');
-const config = require("../settings/config");
 
 module.exports = {
-    command: ["song", "play"],
-    execute: async (sock, m, args) => {
-        const from = m.chat;
-        const text = args.join(' ');
-        if (!text) return sock.sendMessage(from, { text: `Weka jina la wimbo!\nMfano: *${config.prefix}song* Calm Down` }, { quoted: m });
-
+    command: ['song', 'play'],
+    category: 'downloader',
+    execute: async (sock, m, { args, reply, text }) => { // <--- LAZIMA iwe hivi
         try {
-            await sock.sendMessage(from, { react: { text: "⏳", key: m.key } });
-            const { videos } = await yts(text);
-            if (!videos || videos.length === 0) return sock.sendMessage(from, { text: "⚠️ Wimbo haujapatikana!" });
+            if (!text) return reply("❌ Tafadhali weka jina la wimbo!");
+            
+            await sock.sendMessage(m.chat, { react: { text: "📥", key: m.key } });
+            
+            const search = await yts(text);
+            const video = search.videos[0];
+            if (!video) return reply("⚠️ Wimbo haujapatikana.");
 
-            const videoUrl = videos[0].url;
-            const apiUrl = `https://yt-dl.officialhectormanuel.workers.dev/?url=${encodeURIComponent(videoUrl)}`;
-            const response = await axios.get(apiUrl);
-
-            if (response.data.status) {
-                await sock.sendMessage(from, { 
-                    audio: { url: response.data.mp3 }, 
-                    mimetype: 'audio/mpeg' 
+            const apiUrl = `https://api.vreden.my.id/api/ytmp3?url=${encodeURIComponent(video.url)}`;
+            const res = await axios.get(apiUrl);
+            
+            if (res.data.status === 200) {
+                await sock.sendMessage(m.chat, {
+                    audio: { url: res.data.result.downloadUrl },
+                    mimetype: 'audio/mpeg',
+                    fileName: `${video.title}.mp3`
                 }, { quoted: m });
-                await sock.sendMessage(from, { react: { text: "✅", key: m.key } });
             }
         } catch (e) {
             console.error(e);
-            await sock.sendMessage(from, { text: "❌ Imefeli kupata wimbo." });
+            reply("🚨 Mfumo wa download umefeli.");
         }
     }
 };
