@@ -1,0 +1,29 @@
+{
+  "name": "DarkX-minBot",
+  "description": "WhatsApp Bot developed by MrX Dev",
+  "repository": "https://github.com/USER_WAKO/REPO_YAKO",
+  "logo": "https://telegra.ph/file/your-logo-link.jpg",
+  "keywords": ["bot", "whatsapp", "baileys", "darkx"],
+  "env": {
+    "SESSION_ID": {
+      "description": "Ingiza Session ID yako hapa (mfano: DarkX-Ultra~...)",
+      "required": true
+    },
+    "OWNER_NUMBER": {
+      "description": "Namba ya mmiliki wa bot",
+      "value": "255775710774",
+      "required": false
+    },
+    "PREFIX": {
+      "description": "Alama ya kuanzia amri",
+      "value": ".",
+      "required": false
+    }
+  },
+  "formation": {
+    "worker": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  }
+}
