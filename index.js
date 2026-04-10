@@ -1,9 +1,12 @@
 "use strict";
 
 const config = require('./settings/config');
+const fs = require('fs');
+const path = require('path');
+const { Buffer } = require('buffer');
 process.on("uncaughtException", console.error);
 
-let makeWASocket, Browsers, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, jidDecode, delay;
+let makeWASocket, Browsers, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, jidDecode, delay, makeCacheableSignalKeyStore;
 
 const loadBaileys = async () => {
     const baileys = await import('@whiskeysockets/baileys');
@@ -14,6 +17,7 @@ const loadBaileys = async () => {
     fetchLatestBaileysVersion = baileys.fetchLatestBaileysVersion;
     jidDecode = baileys.jidDecode;
     delay = baileys.delay;
+    makeCacheableSignalKeyStore = baileys.makeCacheableSignalKeyStore;
 };
 
 const pino = require('pino');
@@ -37,32 +41,53 @@ const question = (text) => {
 const clientstart = async () => {
     await loadBaileys();
     
-    // Mpangilio wa session (folder lako la session)
-    const { state, saveCreds } = await useMultiFileAuthState(`./${config.sessionName || 'session'}`);
+    const sessionName = config.sessionName || 'session';
+    const sessionPath = path.join(__dirname, sessionName);
+
+    // --- 1. DOWNLOAD SESSION ID (Kama imewekwa kwenye Heroku/Config) ---
+    const sessId = process.env.SESSION_ID || config.SESSION_ID;
+    if (sessId && sessId.startsWith("DarkX-Ultra~") && !fs.existsSync(path.join(sessionPath, 'creds.json'))) {
+        console.log(chalk.blue("🚀 Session ID imegundulika. Inatengeneza folder la session..."));
+        if (!fs.existsSync(sessionPath)) fs.mkdirSync(sessionPath);
+        try {
+            const base64Data = sessId.split("DarkX-Ultra~")[1];
+            fs.writeFileSync(path.join(sessionPath, 'creds.json'), Buffer.from(base64Data, 'base64').toString('utf-8'));
+        } catch (e) {
+            console.log(chalk.red("❌ Session ID imeharibika!"));
+        }
+    }
+
+    const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
     const { version } = await fetchLatestBaileysVersion();
     
     const sock = makeWASocket({
         logger: pino({ level: "silent" }),
-        printQRInTerminal: false, // Tunazima QR ili kutumia pairing code
-        auth: state,
+        printQRInTerminal: false, 
+        auth: {
+            creds: state.creds,
+            keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "silent" })),
+        },
         version: version,
-        browser: ["Ubuntu", "Chrome", "20.0.04"]
+        // Browser version ya kisasa ili kuepuka "Couldn't link device"
+        browser: ["Ubuntu", "Chrome", "121.0.6167.160"]
     });
 
-    // MFUMO WA PAIRING CODE
+    // --- 2. MFUMO WA PAIRING CODE (Kama folder ni jipya kabisa) ---
     if (!sock.authState.creds.registered) {
         console.log(chalk.cyan(`\n--- ${config.botName} Pairing System ---`));
         
-        // Tunampa muda kidogo server kuanza handshake
         setTimeout(async () => {
             const phoneNumber = await question('Ingiza namba ya simu (mfano: 2557XXXXXXXX):\n> ');
-            try {
-                await delay(5000); 
-                let code = await sock.requestPairingCode(phoneNumber.trim());
-                code = code?.match(/.{1,4}/g)?.join("-") || code;
-                console.log(chalk.white('Pairing Code Yako Ni: ') + chalk.bold.green(code));
-            } catch (error) {
-                console.log(chalk.red('Imeshindwa kupata kodi:'), error.message);
+            if (phoneNumber) {
+                try {
+                    await delay(3000); 
+                    let code = await sock.requestPairingCode(phoneNumber.trim());
+                    code = code?.match(/.{1,4}/g)?.join("-") || code;
+                    console.log(chalk.white('\nPairing Code Yako Ni: ') + chalk.bold.green(code));
+                    console.log(chalk.gray("Ingiza kodi hii kwenye WhatsApp yako sasa hivi.\n"));
+                } catch (error) {
+                    console.log(chalk.red('Imeshindwa kupata kodi:'), error.message);
+                }
             }
         }, 3000);
     }
@@ -89,7 +114,8 @@ const clientstart = async () => {
                 console.log(chalk.red('❌ Connection closed. Reconnecting...'));
                 setTimeout(clientstart, 5000);
             } else {
-                console.log(chalk.red('🚫 Logged out. Tafadhali futa session folder na uanze upya.'));
+                console.log(chalk.red('🚫 Logged out. Futa folder la ' + sessionName + ' na uanze upya.'));
+                process.exit(1);
             }
         }
     });
@@ -99,12 +125,11 @@ const clientstart = async () => {
             const mek = chatUpdate.messages[0];
             if (!mek.message) return;
             
-            // Ephemeral message handling
             mek.message = Object.keys(mek.message)[0] === 'ephemeralMessage' 
                 ? mek.message.ephemeralMessage.message 
                 : mek.message;
             
-            const m = smsg(sock, mek); // Inahitaji serialize.js yako kwenye library
+            const m = smsg(sock, mek);
             require("./message")(sock, m, chatUpdate); 
         } catch (err) {
             console.log(err);
