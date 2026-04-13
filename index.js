@@ -4,6 +4,9 @@ const config = require('./settings/config');
 const fs = require('fs');
 const path = require('path');
 const { Buffer } = require('buffer');
+// --- IMPORT BRAIN AI ---
+const { getBotResponse } = require('./library/brain'); 
+
 process.on("uncaughtException", console.error);
 
 let makeWASocket, Browsers, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, jidDecode, delay, makeCacheableSignalKeyStore;
@@ -44,7 +47,7 @@ const clientstart = async () => {
     const sessionName = config.sessionName || 'session';
     const sessionPath = path.join(__dirname, sessionName);
 
-    // --- 1. DOWNLOAD SESSION ID (Kama imewekwa kwenye Heroku/Config) ---
+    // --- 1. DOWNLOAD SESSION ID ---
     const sessId = process.env.SESSION_ID || config.SESSION_ID;
     if (sessId && sessId.startsWith("DarkX-Ultra~") && !fs.existsSync(path.join(sessionPath, 'creds.json'))) {
         console.log(chalk.blue("🚀 Session ID imegundulika. Inatengeneza folder la session..."));
@@ -68,11 +71,10 @@ const clientstart = async () => {
             keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "silent" })),
         },
         version: version,
-        // Browser version ya kisasa ili kuepuka "Couldn't link device"
         browser: ["Ubuntu", "Chrome", "121.0.6167.160"]
     });
 
-    // --- 2. MFUMO WA PAIRING CODE (Kama folder ni jipya kabisa) ---
+    // --- 2. MFUMO WA PAIRING CODE ---
     if (!sock.authState.creds.registered) {
         console.log(chalk.cyan(`\n--- ${config.botName} Pairing System ---`));
         
@@ -130,9 +132,23 @@ const clientstart = async () => {
                 : mek.message;
             
             const m = smsg(sock, mek);
+
+            // --- AI KNOWLEDGE BASE LOGIC (FIXED FOR DM ONLY) ---
+            const body = m.body || ""; 
+            // Tumeongeza !m.isGroup ili isijibu kwenye magroup
+            if (body && !m.key.fromMe && !m.isGroup) {
+                const aiResponse = getBotResponse(body);
+                
+                if (aiResponse) {
+                    await sock.sendMessage(m.chat, { text: aiResponse }, { quoted: m });
+                }
+            }
+
+            // Endelea na message handler ya kawaida (Plugins/Commands)
             require("./message")(sock, m, chatUpdate); 
+            
         } catch (err) {
-            console.log(err);
+            console.log(chalk.red("Error in messages.upsert: "), err);
         }
     });
 
