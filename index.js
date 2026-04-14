@@ -1,109 +1,167 @@
 "use strict";
 
-/**
- * DarkX Core - DM Focused & Protected
- * Optimized by MrX Dev
- */
+const config = require('./settings/config');
+const fs = require('fs');
+const path = require('path');
+const { Buffer } = require('buffer');
+// --- IMPORT BRAIN AI ---
+const { getBotResponse } = require('./library/brain'); 
 
-const _0x5a12 = ["\x2e\x2f\x73\x65\x74\x74\x69\x6e\x67\x73\x2f\x63\x6f\x6e\x66\x69\x67", "\x66\x73", "\x70\x61\x74\x68", "\x62\x75\x66\x66\x65\x72", "\x2e\x2f\x6c\x69\x62\x72\x61\x72\x79\x2f\x62\x72\x61\x69\x6e", "\x44\x61\x72\x6b\x58\x2d\x55\x6c\x74\x72\x61\x7e", "\x63\x72\x65\x64\x73\x2e\x6a\x73\x6f\x6e", "\x55\x62\x75\x6e\x74\x75", "\x43\x68\x72\x6f\x6d\x65", "\x31\x32\x31\x2e\x30\x2e\x36\x31\x36\x37\x2e\x31\x36\x30", "\x2e\x2f\x6c\x69\x62\x72\x61\x72\x79\x2f\x73\x65\x72\x69\x61\x6c\x69\x7a\x65", "\x2e\x2f\x6d\x65\x73\x73\x61\x67\x65"];
-const config = require(_0x5a12[0]);
-const fs = require(_0x5a12[1]);
-const path = require(_0x5a12[2]);
-const { Buffer } = require(_0x5a12[3]);
-const { getBotResponse: _0xai } = require(_0x5a12[4]);
+process.on("uncaughtException", console.error);
 
-process.on("\x75\x6e\x63\x61\x75\x67\x68\x74\x45\x78\x63\x65\x70\x74\x69\x6f\x6e", console.error);
+let makeWASocket, Browsers, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, jidDecode, delay, makeCacheableSignalKeyStore;
 
-let _0xwa, _0xbr, _0xau, _0xdi, _0xfe, _0xji, _0xde, _0xma;
+// Variable ya kudhibiti AI (Default ni OFF)
+let autoAi = false;
 
-const _0xload = async () => {
-    const _0xlib = await import('\x40\x77\x68\x69\x73\x6b\x65\x79\x73\x6f\x63\x6b\x65\x74\x73\x2f\x62\x61\x69\x6c\x65\x79\x73');
-    _0xwa = _0xlib.default;
-    _0xbr = _0xlib.Browsers;
-    _0xau = _0xlib.useMultiFileAuthState;
-    _0xdi = _0xlib.DisconnectReason;
-    _0xfe = _0xlib.fetchLatestBaileysVersion;
-    _0xji = _0xlib.jidDecode;
-    _0xde = _0xlib.delay;
-    _0xma = _0xlib.makeCacheableSignalKeyStore;
+const loadBaileys = async () => {
+    const baileys = await import('@whiskeysockets/baileys');
+    makeWASocket = baileys.default;
+    Browsers = baileys.Browsers;
+    useMultiFileAuthState = baileys.useMultiFileAuthState;
+    DisconnectReason = baileys.DisconnectReason;
+    fetchLatestBaileysVersion = baileys.fetchLatestBaileysVersion;
+    jidDecode = baileys.jidDecode;
+    delay = baileys.delay;
+    makeCacheableSignalKeyStore = baileys.makeCacheableSignalKeyStore;
 };
 
-const pino = require("\x70\x69\x6e\x6f");
-const readline = require("\x72\x65\x61\x64\x6c\x69\x6e\x65");
-const chalk = require("\x63\x68\x61\x6c\x6b");
-const { smsg: _0xsm } = require(_0x5a12[10]);
+const pino = require('pino');
+const readline = require("readline");
+const chalk = require("chalk");
+const { smsg } = require('./library/serialize');
 
-const _0xask = (t) => {
-    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-    return new Promise((r) => { rl.question(chalk.yellow(t), (a) => { r(a); rl.close(); }); });
+const question = (text) => {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
+    return new Promise((resolve) => {
+        rl.question(chalk.yellow(text), (answer) => {
+            resolve(answer);
+            rl.close();
+        });
+    });
 };
 
 const clientstart = async () => {
-    await _0xload();
-    const _0xsn = config.sessionName || "\x73\x65\x73\x73\x69\x6f\x6e";
-    const _0xsp = path.join(__dirname, _0xsn);
-    const _0xid = process.env.SESSION_ID || config.SESSION_ID;
+    await loadBaileys();
+    
+    const sessionName = config.sessionName || 'session';
+    const sessionPath = path.join(__dirname, sessionName);
 
-    if (_0xid && _0xid.startsWith(_0x5a12[5]) && !fs.existsSync(path.join(_0xsp, _0x5a12[6]))) {
-        if (!fs.existsSync(_0xsp)) fs.mkdirSync(_0xsp);
+    // --- 1. DOWNLOAD SESSION ID ---
+    const sessId = process.env.SESSION_ID || config.SESSION_ID;
+    if (sessId && sessId.startsWith("DarkX-Ultra~") && !fs.existsSync(path.join(sessionPath, 'creds.json'))) {
+        console.log(chalk.blue("🚀 Session ID imegundulika. Inatengeneza folder la session..."));
+        if (!fs.existsSync(sessionPath)) fs.mkdirSync(sessionPath);
         try {
-            const _0xb64 = _0xid.split(_0x5a12[5])[1];
-            fs.writeFileSync(path.join(_0xsp, _0x5a12[6]), Buffer.from(_0xb64, "\x62\x61\x73\x65\x36\x34").toString("\x75\x74\x66\x2d\x38"));
-        } catch (e) { console.log(chalk.red("\x53\x65\x73\x73\x69\x6f\x6e\x20\x45\x72\x72\x6f\x72")); }
+            const base64Data = sessId.split("DarkX-Ultra~")[1];
+            fs.writeFileSync(path.join(sessionPath, 'creds.json'), Buffer.from(base64Data, 'base64').toString('utf-8'));
+        } catch (e) {
+            console.log(chalk.red("❌ Session ID imeharibika!"));
+        }
     }
 
-    const { state, saveCreds } = await _0xau(_0xsp);
-    const { version } = await _0xfe();
+    const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
+    const { version } = await fetchLatestBaileysVersion();
     
-    const sock = _0xwa({
-        logger: pino({ level: "\x73\x69\x6c\x65\x6e\x74" }),
+    const sock = makeWASocket({
+        logger: pino({ level: "silent" }),
         printQRInTerminal: false, 
-        auth: { creds: state.creds, keys: _0xma(state.keys, pino({ level: "\x73\x69\x6c\x65\x6e\x74" })) },
+        auth: {
+            creds: state.creds,
+            keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "silent" })),
+        },
         version: version,
-        browser: [_0x5a12[7], _0x5a12[8], _0x5a12[9]]
+        browser: ["Ubuntu", "Chrome", "121.0.6167.160"]
     });
 
+    // --- 2. MFUMO WA PAIRING CODE ---
     if (!sock.authState.creds.registered) {
+        console.log(chalk.cyan(`\n--- ${config.botName} Pairing System ---`));
+        
         setTimeout(async () => {
-            const _0xph = await _0xask("\x49\x6e\x67\x69\x7a\x61\x20\x6e\x61\x6d\x62\x61\x20\x79\x61\x20\x73\x69\x6d\x75\x3a\x20");
-            if (_0xph) {
+            const phoneNumber = await question('Ingiza namba ya simu (mfano: 2557XXXXXXXX):\n> ');
+            if (phoneNumber) {
                 try {
-                    await _0xde(3000); 
-                    let _0xco = await sock.requestPairingCode(_0xph.trim());
-                    _0xco = _0xco?.match(/.{1,4}/g)?.join("\x2d") || _0xco;
-                    console.log(chalk.white("\x50\x61\x69\x72\x69\x6e\x67\x20\x43\x6f\x64\x65\x3a\x20") + chalk.bold.green(_0xco));
-                } catch (err) { console.log(chalk.red("\x46\x61\x69\x6c\x65\x64")); }
+                    await delay(3000); 
+                    let code = await sock.requestPairingCode(phoneNumber.trim());
+                    code = code?.match(/.{1,4}/g)?.join("-") || code;
+                    console.log(chalk.white('\nPairing Code Yako Ni: ') + chalk.bold.green(code));
+                    console.log(chalk.gray("Ingiza kodi hii kwenye WhatsApp yako sasa hivi.\n"));
+                } catch (error) {
+                    console.log(chalk.red('Imeshindwa kupata kodi:'), error.message);
+                }
             }
         }, 3000);
     }
 
-    sock.ev.on("\x63\x72\x65\x64\x73\x2e\x75\x70\x64\x61\x74\x65", saveCreds);
+    sock.ev.on('creds.update', saveCreds);
 
-    sock.ev.on("\x63\x6f\x6e\x6e\x65\x63\x74\x69\x6f\x6e\x2e\x75\x70\x64\x61\x74\x65", (_0xup) => {
-        const { connection: _0xcn, lastDisconnect: _0xld } = _0xup;
-        if (_0xcn === "\x6f\x70\x65\x6e") {
-            console.log(chalk.green(`\u2705 ${config.botName} Online!`));
+    sock.ev.on('connection.update', (update) => {
+        const { connection, lastDisconnect } = update;
+        
+        if (connection === 'connecting') {
+            console.log(chalk.yellow('🔄 Connecting to WhatsApp...'));
         }
-        if (_0xcn === "\x63\x6c\x6f\x73\x65") {
-            const _0xst = _0xld?.error?.output?.statusCode;
-            if (_0xst !== _0xdi.loggedOut) { clientstart(); } else { process.exit(1); }
+        
+        if (connection === 'open') {
+            console.log(chalk.green(`✅ ${config.botName} Imeunganishwa kikamilifu!`));
+            console.log(chalk.cyan(`👤 Owner: ${config.ownerName}`));
+        }
+        
+        if (connection === 'close') {
+            const statusCode = lastDisconnect?.error?.output?.statusCode;
+            const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+            
+            if (shouldReconnect) {
+                console.log(chalk.red('❌ Connection closed. Reconnecting...'));
+                setTimeout(clientstart, 5000);
+            } else {
+                console.log(chalk.red('🚫 Logged out. Futa folder la ' + sessionName + ' na uanze upya.'));
+                process.exit(1);
+            }
         }
     });
 
-    sock.ev.on("\x6d\x65\x73\x73\x61\x67\x65\x73\x2e\x75\x70\x73\x65\x72\x74", async _0xupd => {
+    sock.ev.on('messages.upsert', async chatUpdate => {
         try {
-            const _0xmk = _0xupd.messages[0];
-            if (!_0xmk.message) return;
-            const m = _0xsm(sock, _0xmk);
-            const _0xbd = m.body || ""; 
+            const mek = chatUpdate.messages[0];
+            if (!mek.message) return;
             
-            // SECURITY CHECK: Private Chat Only + No Self-Replies
-            if (_0xbd && !m.key.fromMe && !m.isGroup) {
-                const _0xres = _0xai(_0xbd);
-                if (_0xres) await sock.sendMessage(m.chat, { text: _0xres }, { quoted: m });
+            mek.message = Object.keys(mek.message)[0] === 'ephemeralMessage' 
+                ? mek.message.ephemeralMessage.message 
+                : mek.message;
+            
+            const m = smsg(sock, mek);
+            const body = m.body || ""; 
+
+            // --- AI SWITCH COMMANDS (OWNER ONLY) ---
+            if (body === ".aion" && m.key.fromMe) {
+                autoAi = true;
+                return await sock.sendMessage(m.chat, { text: "✅ AI Auto-Reply sasa iko ON!" });
             }
-            require(_0x5a12[11])(sock, m, _0xupd); 
-        } catch (e) { console.log(e); }
+            if (body === ".aioff" && m.key.fromMe) {
+                autoAi = false;
+                return await sock.sendMessage(m.chat, { text: "📴 AI Auto-Reply sasa iko OFF!" });
+            }
+
+            // --- AI KNOWLEDGE BASE LOGIC (IF ON & DM ONLY) ---
+            if (autoAi && body && !m.key.fromMe && !m.isGroup) {
+                const aiResponse = getBotResponse(body);
+                
+                if (aiResponse) {
+                    await sock.sendMessage(m.chat, { text: aiResponse }, { quoted: m });
+                }
+            }
+
+            // Endelea na message handler ya kawaida (Plugins/Commands)
+            require("./message")(sock, m, chatUpdate); 
+            
+        } catch (err) {
+            console.log(chalk.red("Error in messages.upsert: "), err);
+        }
     });
 
     return sock;
