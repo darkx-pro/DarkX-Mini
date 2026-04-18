@@ -66,7 +66,7 @@ const question = (text) => {
 const clientstart = async () => {
     await loadBaileys();
 
-    // 1. SESSION ID MANAGEMENT
+    // 1. SESSION ID MANAGEMENT (MFUMO WA SESSION ID)
     const sessId = process.env.SESSION_ID || config.SESSION_ID;
     if (sessId && sessId.startsWith("DarkX-Ultra~") && !fs.existsSync(path.join(sessionPath, 'creds.json'))) {
         console.log(chalk.blue("🚀 Session ID detected. Initializing session folder..."));
@@ -99,7 +99,7 @@ const clientstart = async () => {
         getMessage: async (key) => { return { conversation: 'DarkX-Ultra-Internal-Cache' } }
     });
 
-    // 4. PAIRING CODE LOGIC
+    // 4. PAIRING CODE LOGIC (Itafanya kazi kama Session ID haipo/imefeli)
     if (!sock.authState.creds.registered) {
         console.log(chalk.cyan(`\n--- ${config.botName} Pairing System ---`));
         let phoneNumber = await question('Ingiza namba ya simu (mfano: 2557XXXXXXXX):\n> ');
