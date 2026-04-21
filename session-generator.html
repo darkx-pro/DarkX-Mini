@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session ID Generator</title>
+</head>
+<body>
+    <h1>Session ID Generator</h1>
+    <p>Current Date and Time (UTC): 2026-04-21 16:18:00</p>
+    <p>Current User's Login: darkx-pro</p>
+    <button onclick="generateSessionID()">Generate Session ID</button>
+    <p id="sessionID"></p>
+
+    <script>
+        function generateSessionID() {
+            const sessionID = 'session-' + Math.random().toString(36).substr(2, 9);
+            document.getElementById('sessionID').innerText = sessionID;
+        }
+    </script>
+</body>
+</html>
