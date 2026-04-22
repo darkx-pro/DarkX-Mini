@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DarkX WhatsApp Connector</title>
+</head>
+
+<body style="background:#111;color:white;font-family:Arial;text-align:center;padding-top:50px;">
+
+<h1>⚡ DarkX Connector</h1>
+
+<p>Ingiza namba (mfano +2557xxxxxxx)</p>
+
+<input id="number" style="padding:10px;width:250px;" placeholder="+2557xxxxxxx">
+
+<br><br>
+
+<button onclick="connect()" style="padding:10px 20px;background:green;color:white;">
+CONNECT
+</button>
+
+<h3 id="result"></h3>
+
+<script>
+async function connect() {
+    let number = document.getElementById("number").value;
+
+    document.getElementById("result").innerText = "Connecting...";
+
+    let res = await fetch("/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ number })
+    });
+
+    let data = await res.json();
+
+    if (data.code) {
+        document.getElementById("result").innerText =
+            "PAIRING CODE: " + data.code;
+    } else {
+        document.getElementById("result").innerText =
+            "ERROR: " + data.error;
+    }
+}
+</script>
+
+</body>
+</html>
