@@ -5,6 +5,7 @@
  * Owner: MrX Dev
  * Engineer: Senior Node.js WhatsApp Bot Engineer
  * Optimized index.js for performance, stability, and memory safety.
+ * [AI Auto-Reply system removed as requested]
  */
 
 const config = require('./settings/config');
@@ -15,7 +16,6 @@ const pino = require('pino');
 const readline = require("readline");
 const chalk = require("chalk");
 const { smsg } = require('./library/serialize');
-const { getBotResponse } = require('./library/brain');
 
 // Process optimization
 process.on("uncaughtException", (err) => {
@@ -45,8 +45,6 @@ const loadBaileys = async () => {
     }
 };
 
-// Global state
-let autoAi = false;
 const sessionName = config.sessionName || 'session';
 const sessionPath = path.join(__dirname, sessionName);
 
@@ -66,7 +64,7 @@ const question = (text) => {
 const clientstart = async () => {
     await loadBaileys();
 
-    // 1. SESSION ID MANAGEMENT (MFUMO WA SESSION ID)
+    // 1. SESSION ID MANAGEMENT
     const sessId = process.env.SESSION_ID || config.SESSION_ID;
     if (sessId && sessId.startsWith("DarkX-Ultra~") && !fs.existsSync(path.join(sessionPath, 'creds.json'))) {
         console.log(chalk.blue("🚀 Session ID detected. Initializing session folder..."));
@@ -99,7 +97,7 @@ const clientstart = async () => {
         getMessage: async (key) => { return { conversation: 'DarkX-Ultra-Internal-Cache' } }
     });
 
-    // 4. PAIRING CODE LOGIC (Itafanya kazi kama Session ID haipo/imefeli)
+    // 4. PAIRING CODE LOGIC
     if (!sock.authState.creds.registered) {
         console.log(chalk.cyan(`\n--- ${config.botName} Pairing System ---`));
         let phoneNumber = await question('Ingiza namba ya simu (mfano: 2557XXXXXXXX):\n> ');
@@ -163,28 +161,8 @@ const clientstart = async () => {
             }
 
             const m = smsg(sock, mek);
-            const body = m.body || "";
-            const isOwner = m.key.fromMe || config.ownerNumber?.includes(m.sender.split('@')[0]);
-
-            // AI Toggle Logic (Internalized for index.js efficiency)
-            if (body === ".aion" && isOwner) {
-                autoAi = true;
-                return await sock.sendMessage(m.chat, { text: "✅ *DarkX AI:* Auto-Reply is now ON!" }, { quoted: m });
-            }
-            if (body === ".aioff" && isOwner) {
-                autoAi = false;
-                return await sock.sendMessage(m.chat, { text: "📴 *DarkX AI:* Auto-Reply is now OFF!" }, { quoted: m });
-            }
-
-            // AI Brain Execution (Priority check)
-            if (autoAi && body && !m.key.fromMe && !m.isGroup) {
-                const aiResponse = getBotResponse(body);
-                if (aiResponse) {
-                    await sock.sendMessage(m.chat, { text: aiResponse }, { quoted: m });
-                }
-            }
-
-            // Pass to Main Handler
+            
+            // Pass to Main Handler (AI removed)
             require("./message")(sock, m, chatUpdate);
 
         } catch (err) {
