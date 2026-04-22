@@ -1,186 +1,160 @@
 "use strict";
 
-/**
- * Project: DarkX Ultra
- * Owner: MrX Dev
- * Engineer: Senior Node.js WhatsApp Bot Engineer
- * Optimized index.js for performance, stability, and memory safety.
- * [AI Auto-Reply system removed as requested]
- */
-
 const config = require('./settings/config');
 const fs = require('fs');
 const path = require('path');
-const { Buffer } = require('buffer');
 const pino = require('pino');
 const readline = require("readline");
 const chalk = require("chalk");
+const express = require("express");
+
 const { smsg } = require('./library/serialize');
 
-// Process optimization
+// =========================
+// EXPRESS APP (NEW)
+// =========================
+const app = express();
+app.use(express.json());
+app.use(express.static("public"));
+
+// GLOBAL SOCKET HOLDER
+let sockGlobal;
+
+// =========================
+// ERROR HANDLERS
+// =========================
 process.on("uncaughtException", (err) => {
-    console.error(chalk.red("CRITICAL ERROR (Uncaught Exception):"), err);
-});
-process.on("unhandledRejection", (reason) => {
-    console.error(chalk.red("CRITICAL ERROR (Unhandled Rejection):"), reason);
+    console.error(chalk.red("ERROR:"), err);
 });
 
-// Dynamic Baileys Imports
-let makeWASocket, Browsers, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, jidDecode, delay, makeCacheableSignalKeyStore;
+process.on("unhandledRejection", (err) => {
+    console.error(chalk.red("ERROR:"), err);
+});
+
+// =========================
+// BAILEYS IMPORTS
+// =========================
+let makeWASocket, Browsers, useMultiFileAuthState,
+DisconnectReason, fetchLatestBaileysVersion,
+jidDecode, delay, makeCacheableSignalKeyStore;
 
 const loadBaileys = async () => {
-    try {
-        const baileys = await import('@whiskeysockets/baileys');
-        makeWASocket = baileys.default;
-        Browsers = baileys.Browsers;
-        useMultiFileAuthState = baileys.useMultiFileAuthState;
-        DisconnectReason = baileys.DisconnectReason;
-        fetchLatestBaileysVersion = baileys.fetchLatestBaileysVersion;
-        jidDecode = baileys.jidDecode;
-        delay = baileys.delay;
-        makeCacheableSignalKeyStore = baileys.makeCacheableSignalKeyStore;
-    } catch (e) {
-        console.error(chalk.red("Failed to load Baileys library:"), e);
-        process.exit(1);
-    }
+    const baileys = await import('@whiskeysockets/baileys');
+
+    makeWASocket = baileys.default;
+    Browsers = baileys.Browsers;
+    useMultiFileAuthState = baileys.useMultiFileAuthState;
+    DisconnectReason = baileys.DisconnectReason;
+    fetchLatestBaileysVersion = baileys.fetchLatestBaileysVersion;
+    jidDecode = baileys.jidDecode;
+    delay = baileys.delay;
+    makeCacheableSignalKeyStore = baileys.makeCacheableSignalKeyStore;
 };
 
-const sessionName = config.sessionName || 'session';
-const sessionPath = path.join(__dirname, sessionName);
+const sessionPath = path.join(__dirname, "session");
 
 const question = (text) => {
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout
     });
+
     return new Promise((resolve) => {
-        rl.question(chalk.yellow(text), (answer) => {
-            resolve(answer);
+        rl.question(chalk.yellow(text), (ans) => {
             rl.close();
+            resolve(ans);
         });
     });
 };
 
+// =========================
+// BOT START
+// =========================
 const clientstart = async () => {
+
     await loadBaileys();
 
-    // 1. SESSION ID MANAGEMENT
-    const sessId = process.env.SESSION_ID || config.SESSION_ID;
-    if (sessId && sessId.startsWith("DarkX-Ultra~") && !fs.existsSync(path.join(sessionPath, 'creds.json'))) {
-        console.log(chalk.blue("🚀 Session ID detected. Initializing session folder..."));
-        if (!fs.existsSync(sessionPath)) fs.mkdirSync(sessionPath, { recursive: true });
-        try {
-            const base64Data = sessId.split("DarkX-Ultra~")[1];
-            fs.writeFileSync(path.join(sessionPath, 'creds.json'), Buffer.from(base64Data, 'base64').toString('utf-8'));
-        } catch (e) {
-            console.log(chalk.red("❌ Session ID is corrupt!"));
-        }
-    }
-
-    // 2. AUTH STATE & VERSIONING
     const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
-    const { version, isLatest } = await fetchLatestBaileysVersion();
-    console.log(chalk.gray(`WhatsApp Web Version: ${version.join('.')} (Latest: ${isLatest})`));
+    const { version } = await fetchLatestBaileysVersion();
 
-    // 3. SOCKET INITIALIZATION
     const sock = makeWASocket({
         logger: pino({ level: "silent" }),
-        printQRInTerminal: false,
         auth: {
             creds: state.creds,
-            keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "silent" })),
+            keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "silent" }))
         },
         version,
         browser: Browsers.ubuntu("Chrome"),
-        markOnlineOnConnect: true,
-        generateHighQualityLinkPreview: true,
-        getMessage: async (key) => { return { conversation: 'DarkX-Ultra-Internal-Cache' } }
+        printQRInTerminal: false
     });
 
-    // 4. PAIRING CODE LOGIC
-    if (!sock.authState.creds.registered) {
-        console.log(chalk.cyan(`\n--- ${config.botName} Pairing System ---`));
-        let phoneNumber = await question('Ingiza namba ya simu (mfano: 2557XXXXXXXX):\n> ');
-        phoneNumber = phoneNumber.replace(/[^0-9]/g, '');
+    // SAVE GLOBAL SOCKET
+    sockGlobal = sock;
 
-        if (phoneNumber) {
-            try {
-                await delay(3000);
-                const code = await sock.requestPairingCode(phoneNumber);
-                const formattedCode = code?.match(/.{1,4}/g)?.join("-") || code;
-                console.log(chalk.white('\nPairing Code Yako Ni: ') + chalk.bold.green(formattedCode));
-                console.log(chalk.gray("Ingiza kodi hii kwenye WhatsApp yako sasa hivi.\n"));
-            } catch (error) {
-                console.error(chalk.red('Failed to request pairing code:'), error.message);
-            }
-        }
-    }
+    // SAVE CREDS
+    sock.ev.on("creds.update", saveCreds);
 
-    // 5. EVENT LISTENERS
-    sock.ev.on('creds.update', saveCreds);
+    // CONNECTION
+    sock.ev.on("connection.update", (update) => {
+        const { connection } = update;
 
-    sock.ev.on('connection.update', (update) => {
-        const { connection, lastDisconnect } = update;
-
-        if (connection === 'connecting') {
-            console.log(chalk.yellow('🔄 Connecting to WhatsApp...'));
+        if (connection === "open") {
+            console.log(chalk.green("✅ Bot Connected"));
         }
 
-        if (connection === 'open') {
-            console.log(chalk.green(`✅ ${config.botName} Imeunganishwa kikamilifu!`));
-            console.log(chalk.cyan(`👤 Owner: ${config.ownerName}`));
-        }
-
-        if (connection === 'close') {
-            const statusCode = lastDisconnect?.error?.output?.statusCode;
-            const reason = new Error(lastDisconnect?.error)?.message;
-            const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
-
-            console.log(chalk.red(`❌ Connection closed. Reason: ${reason || statusCode}`));
-
-            if (shouldReconnect) {
-                console.log(chalk.yellow('🔄 Attempting to reconnect in 5 seconds...'));
-                setTimeout(clientstart, 5000);
-            } else {
-                console.log(chalk.red('🚫 Session Logged Out. Please clear session folder and restart.'));
-                process.exit(1);
-            }
+        if (connection === "close") {
+            console.log(chalk.red("❌ Connection closed"));
+            setTimeout(clientstart, 5000);
         }
     });
 
-    sock.ev.on('messages.upsert', async (chatUpdate) => {
+    // MESSAGE HANDLER
+    sock.ev.on("messages.upsert", async (chatUpdate) => {
         try {
-            if (chatUpdate.type !== 'notify') return;
-            const mek = chatUpdate.messages[0];
-            if (!mek.message) return;
+            const m = chatUpdate.messages[0];
+            if (!m.message) return;
 
-            // Handle Ephemeral and ViewOnce
-            const msgType = Object.keys(mek.message)[0];
-            if (msgType === 'ephemeralMessage' || msgType === 'viewOnceMessage' || msgType === 'viewOnceMessageV2') {
-                mek.message = mek.message[msgType].message;
-            }
+            require("./message")(sock, smsg(sock, m), chatUpdate);
 
-            const m = smsg(sock, mek);
-            
-            // Pass to Main Handler (AI removed)
-            require("./message")(sock, m, chatUpdate);
-
-        } catch (err) {
-            console.error(chalk.red("Error in message event loop: "), err);
+        } catch (e) {
+            console.log(e);
         }
     });
 
-    // Contacts/Identity logic
-    sock.decodeJid = (jid) => {
-        if (!jid) return jid;
-        if (/:\d+@/gi.test(jid)) {
-            let decode = jidDecode(jid) || {};
-            return decode.user && decode.server && decode.user + '@' + decode.server || jid;
-        } else return jid;
-    };
+    // PAIRING (CLI MODE OPTIONAL)
+    if (!sock.authState.creds.registered) {
+        let number = await question("Enter number: ");
+        number = number.replace(/[^0-9]/g, "");
 
-    return sock;
+        const code = await sock.requestPairingCode(number);
+        console.log(chalk.green("PAIRING CODE:"), code);
+    }
 };
 
-// Start Boot Process
-clientstart().catch(err => console.error("Startup Failure:", err));
+// =========================
+// API ROUTE (CONNECT)
+// =========================
+app.post("/connect", async (req, res) => {
+    try {
+        const number = req.body.number;
+
+        if (!sockGlobal) {
+            return res.json({ error: "Bot haijaanza bado" });
+        }
+
+        const code = await sockGlobal.requestPairingCode(number);
+
+        res.json({ code });
+    } catch (err) {
+        res.json({ error: err.message });
+    }
+});
+
+// =========================
+// START EVERYTHING
+// =========================
+clientstart().catch(console.error);
+
+app.listen(3000, () => {
+    console.log("🌐 Server running: http://localhost:3000");
+});
