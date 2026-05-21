@@ -1,53 +1,136 @@
+
 # 🎭 DARKX-MINI WHATSAPP BOT
 
 <p align="center">
-  <img src="https://files.catbox.moe/pc5uec.png" width="200" height="200" alt="DarkX Logo">
+  <img src="https://files.catbox.moe/pc5uec.png" width="180" height="180" alt="DarkX Logo">
 </p>
 
 <p align="center">
-  <a href="https://github.com/darkx-pro/DarkX-Mini/fork"><img src="https://img.shields.io/badge/FORK-REPO-blue?style=for-the-badge&logo=github" alt="Fork"></a>
-  <a href="https://github.com/darkx-pro/DarkX-Mini/stargazers"><img src="https://img.shields.io/badge/STAR-REPO-yellow?style=for-the-badge&logo=github" alt="Stars"></a>
+  <a href="https://github.com/darkx-pro/DarkX-Mini/fork">
+    <img src="https://img.shields.io/badge/FORK-REPO-blue?style=for-the-badge&logo=github">
+  </a>
+  <a href="https://github.com/darkx-pro/DarkX-Mini/stargazers">
+    <img src="https://img.shields.io/badge/STAR-REPO-yellow?style=for-the-badge&logo=github">
+  </a>
 </p>
 
 ---
 
-## 🚀 NJIA ZA KU-DEPLOY
+# 🚀 DEPLOY OPTIONS
 
-### 1. HEROKU (Njia Rahisi)
-Bonyeza button hapa chini kuanza ku-deploy moja kwa moja kwenye Heroku.
+## 🟣 1. DEPLOY ON HEROKU (FAST & EASY)
 
-[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://dashboard.heroku.com/new?template=https://github.com/darkx-pro/DarkX-Mini)
+Bonyeza hapa chini ku-deploy moja kwa moja:
 
----
-
-## 🔑 JINSI YA KUPATA SESSION ID
-Kabla ya ku-deploy, unahitaji **Session ID**. Fuata hatua hizi:
-
-1.  Fungua tovuti hii: [**SMD Pairing Site**](https://smd-pair.zone.id/pair)
-2.  Ingiza namba yako ya WhatsApp (mfano: `255775710774`).
-3.  Ingiza **Pairing Code** utakayopokea kwenye WhatsApp yako.
-4.  Baada ya kufanikiwa, utatumiwa kodi ndefu inayoanza na `SMD~`.
-
-### ⚠️ MUHIMU: Badilisha Jina la Session
-Bot yetu inatambua kodi inayozanza na jina la **DarkX-Ultra**. Fanya hivi:
-* **Kodi uliyopata:** `SMD~eyJub2lzZ...`
-* **Badilisha iwe:** `DarkX-Ultra~eyJub2lzZ...`
-*(Futa tu neno `SMD` na weka `DarkX-Ultra` kabla ya alama ya `~`)*.
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://dashboard.heroku.com/new?template=https://github.com/darkx-pro/DarkX-Mini)
 
 ---
 
-### 2. DEPLOY KWENYE PANEL (Pterodactyl/VPS)
-Kama unatumia Panel au VPS, tumia amri hizi kwenye Console:
+## 🔑 GET SESSION ID
 
+### 📌 Hatua kwa Hatua:
+
+1. Fungua site:  
+👉 https://smd-pair.zone.id/pair  
+
+2. Ingiza namba yako (mfano):
+
+255775710774
+
+3. Ingiza Pairing Code utakayotumiwa WhatsApp
+
+4. Utapata code kama:
+
+SMD~eyJub2lzZ...
+
+---
+
+## ⚠️ IMPORTANT: BADILISHA SESSION NAME
+
+Bot inahitaji format hii:
+
+### ❌ Default:
+
+SMD~eyJub2lzZ...
+
+### ✅ Sahihi:
+
+DarkX-Ultra~eyJub2lzZ...
+
+👉 Badilisha tu `SMD` → `DarkX-Ultra`
+
+---
+
+# 🖥️ 2. DEPLOY ON VPS / PANEL (ADVANCED)
+
+## 📦 Step-by-Step Commands
+
+### 📥 Clone Repository
 ```bash
-# 1. Clone Repo
-git clone [https://github.com/darkx-pro/DarkX-Mini.git](https://github.com/darkx-pro/DarkX-Mini.git)
+git clone https://github.com/darkx-pro/DarkX-Mini.git
 
-# 2. Ingia kwenye folder
+📂 Open Folder
+
 cd DarkX-Mini
 
-# 3. Install Module muhimu
+📦 Install Dependencies
+
 npm install
 
-# 4. Washa Bot
+▶️ Run Bot
+
 npm start
+
+
+---
+
+⚡ QUICK SETUP (ONE COMMAND)
+
+git clone https://github.com/darkx-pro/DarkX-Mini.git && cd DarkX-Mini && npm install && npm start
+
+
+---
+
+⚙️ RUN 24/7 (PM2)
+
+npm install -g pm2
+pm2 start index.js --name darkx-bot
+pm2 save
+pm2 startup
+
+
+---
+
+🔥 FEATURES
+
+✔ WhatsApp Bot (Baileys Based)
+✔ Session Login System
+✔ Easy Deploy (Heroku + VPS)
+✔ Custom Commands Support
+✔ DarkX Style UI
+
+
+---
+
+👑 CREDITS
+
+Developer: Mr X
+
+Project: DarkX
+
+Community: DarkX Tech Hub
+
+
+
+---
+
+⭐ SUPPORT
+
+Ukifurahia project:
+
+👉 Star repo
+👉 Fork repo
+👉 Share kwa wengine
+
+---
+
